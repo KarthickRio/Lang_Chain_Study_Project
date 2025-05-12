@@ -1,0 +1,32 @@
+You are working in a Next.js + TypeScript + Tailwind project.
+
+**Goal:**  
+Build a frontend analytics dashboard that showcases key metrics from the Café Rewards dataset. All the data is already stored in a Supabase (Postgres) database and accessible via a Supabase MCP endpoint.
+
+**You have:**  
+- A running Next.js app (basic setup complete)  
+- TailwindCSS already configured  
+- Access to Supabase via MCP (SQL execution through an API)  
+- A Figma file that serves as the design reference (read-only access via Figma MCP)  
+- Optionally, context7 for live documentation (https://docs.my-library.io)
+
+**Database Tables:**  
+- `offers`: details of promotional offers (bogo, discount, informational)  
+- `customers`: demographics like gender, income, signup date  
+- `events`: logs of offer received/viewed/completed + transactions
+
+**What you want to build:**  
+A dashboard that shows these metrics:
+1. **KPIs**: overall completion rate, completion by offer type, % users who completed ≥1 offer, avg days to complete  
+2. **Trends**: daily transactions, weekly completion rate, stacked bar of offer types over time  
+3. **Demographics**: gender breakdown of completions, income vs. completion rate, channel effectiveness  
+4. **Summaries**: total transactions, % BOGO offers completed, 7-day rolling avg spend
+
+**Your job:**  
+- Use the Supabase MCP to run SQL queries and fetch metrics  
+- Render all metrics as cards/charts using React + Tailwind  
+- Use Figma MCP to inspect layout tokens or design spacing if needed  
+- Do not attempt to write to Figma—read-only reference only  
+- Return a complete, functional dashboard at `/` when someone runs `npm run dev`
+
+Only fetch, transform, and render data visually using components—this is a read-only analytics frontend based on live database values.
