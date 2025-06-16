@@ -1,6 +1,7 @@
 {
+  "type": "module",
   "dependencies": {
-    "@ai-sdk/openai": "^1.1.5",
+    "@langdb/vercel-provider": "^0.1.1",
     "ai": "^4.1.10"
   }
 }
