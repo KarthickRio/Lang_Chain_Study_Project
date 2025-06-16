@@ -11,6 +11,12 @@ This repository provides comprehensive examples and integrations for LangDB, dem
 
 ## Examples
 
+### Basic Integration
+
+| Framework | Example | Path |
+|-----------|---------|------|
+| OpenAI API | Simple Integration | [`examples/basic.py`](examples/basic.py) |
+
 ### Framework Integrations
 
 | Framework | Example                           | Path                                                                                   |
@@ -20,19 +26,33 @@ This repository provides comprehensive examples and integrations for LangDB, dem
 | LangChain | RAG-agent Setup                   | [`examples/langchain/langchain-rag-bot`](examples/langchain/langchain-rag-bot)         |
 | CrewAI | Basic Implementation              | [`examples/crewai/crewai-basic`](examples/crewai/crewai-basic)                         |
 | CrewAI | Multi-agent Orchestration         | [`examples/crewai/crewai-multi-agent`](examples/crewai/crewai-multi-agent)             |
+| CrewAI | Report Writing Agent              | [`examples/crewai/report-writing-agent`](examples/crewai/report-writing-agent)         |
 | LlamaIndex | Basic Integration                 | [`examples/llamaindex/llamaindex-basic`](examples/llamaindex/llamaindex-basic)         |
+| Google ADK | Web Search Agent                  | [`examples/google-adk/web-search-agent`](examples/google-adk/web-search-agent)         |
+| OpenAI Agents SDK | Customer Support Agent            | [`examples/openai/customer-support`](examples/openai/customer-support)                 |
+| OpenAI Agents SDK | Travel Agent                      | [`examples/openai/travel-agent`](examples/openai/travel-agent)                         |
+| Mem0 | Memory System Integration         | [`examples/mem0`](examples/mem0)                                                       |
 | Vercel AI SDK | JavaScript/Node.js Implementation | [`examples/vercel`](examples/vercel)                                                   |
-| Rasa | Conversational AI Integration     | [`examples/rasa`](https://github.com/langdb/rasa-starter-pack)                         |
+| Supabase | Database Integration              | [`examples/supabase`](examples/supabase)                                               |
+| Rasa | Conversational AI Integration     | [`examples/rasa`](examples/rasa)                                                       |
 
 
 ### Feature Examples
 
 | Feature | Example | Path |
 |---------|---------|------|
-| MCP Support | Model Provider Integration | [`examples/mcp`](examples/mcp) |
 | Routing | Basic Setup | [`examples/routing/routing-basic`](examples/routing/routing-basic) |
 | Routing | Multi-agent Setup | [`examples/routing/routing-multi-agent`](examples/routing/routing-multi-agent) |
 | Evaluation | Model Evaluation & Cost Analysis | [`examples/evaluation`](examples/evaluation) |
+
+### MCP Examples
+
+| Example | Description | Path |
+|---------|-------------|------|
+| MCP Support | Model Provider Integration | [`examples/mcp/mcp-support.ipynb`](examples/mcp/mcp-support.ipynb) |
+| Cafe Dashboard | Next.js with MCP Integration | [`examples/mcp/cafe-dashboard`](examples/mcp/cafe-dashboard) |
+| Server Actions Demo | Next.js Server Actions with MCP | [`examples/mcp/nextjs-server-actions-demo`](examples/mcp/nextjs-server-actions-demo) |
+| SvelteKit Integration | SvelteKit MCP Sample | [`examples/mcp/sveltekit-mcp-sample`](examples/mcp/sveltekit-mcp-sample) |
 
 ## Key Features
 
