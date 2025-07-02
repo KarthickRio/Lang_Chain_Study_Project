@@ -18,75 +18,97 @@ Create a `.env` file in the project root with the following variables:
 ```bash
 # LangDB API Configuration
 LANGDB_API_KEY=your_api_key_here
-LANGDB_BASE_URL=your_base_url_here
+LANGDB_API_BASE_URL=https://api.us-east-1.langdb.ai
 LANGDB_PROJECT_ID=your_project_id_here
 ```
 
 ### Environment Variable Details
 
 - `LANGDB_API_KEY`: Your LangDB API key (required)
-- `LANGDB_BASE_URL`: The base URL for your LangDB instance
+- `LANGDB_API_BASE_URL`: The base URL for the LangDB API (e.g., `https://api.us-east-1.langdb.ai`)
 - `LANGDB_PROJECT_ID`: Your LangDB project identifier
+
+### Initialize LangDB Tracing
+
+Before any CrewAI code runs, initialize LangDB tracing with `pylangdb`:
+
+```python
+from pylangdb.crewai import init
+from dotenv import load_dotenv
+
+load_dotenv()  # loads the .env variables set above
+init()         # start tracing
+```
 
 ## Model Configuration
 
-Models are configured individually for each agent in `main.py`. Each agent uses the `create_llm()` function to configure its language model.
+This project uses a flexible model configuration system, allowing you to assign different models to each agent. Models are configured in `main.py` using the `create_llm()` helper function.
 
-> We need to setup Virtual MCP Server and Virtual Model for `Researcher Agent` to use Tavily Search MCP.
+### How Models are Configured
 
-## Virtual MCP Server Setup
-
-1. Log in and navigate to **MCP Servers → Virtual MCP Servers** on [app.langdb.ai](https://app.langdb.ai).  
-2. Click **+ New Virtual MCP Server** and configure:
-   - **Name**: e.g. `web-search-mcp`  
-   - **Underlying MCP**: choose [Tavily Search MCP](https://app.langdb.ai/mcp-servers/tavily-mcp-4024f9c3-3d20-48d2-92da-4c7e9910e5f9)
-3. Then head to Models page to setup virtual model.
-
-## Virtual Model Setup
-
-1. Log in and navigate to **Project → Models** on [app.langdb.ai](https://app.langdb.ai).  
-2. Click **+ New Virtual Model** and configure name, base model, version, and MCP Server for search tools. We used [Tavily Search MCP](https://app.langdb.ai/mcp-servers/tavily-mcp-4024f9c3-3d20-48d2-92da-4c7e9910e5f9) Deployed on LangDB. 
-3. Copy the generated model name (e.g. `openai/langdb/report-researcher@v1`).  
-4. Update your `main.py` for `Researcher Agent` pass that virtual-model name into `create_llm(...)`, for example:
+In `main.py`, each agent's `llm` is instantiated by calling `create_llm()` with a model name string.
 
 ```python
-      @agent
-      def researcher(self) -> Agent:
-         return Agent(
-               config=self.agents_config['researcher'],
-               verbose=True,
-               llm=create_llm("openai/langdb/your-model-name", "research")
-         )
+# Example from main.py
+llm = create_llm("openai/gpt-4o", "analysis")
 ```
 
-### Code
+To change the model for any agent, simply modify the model string in the corresponding agent method:
 
-Models are configured individually for each agent in main.py. Each agent uses the create_llm() function to configure its language model.
+- **Researcher Agent**: Edit the `create_llm()` call inside the `researcher` method.
+- **Analyst Agent**: Edit the `create_llm()` call inside the `analyst` method.
+- **Report Writer Agent**: Edit the `create_llm()` call inside the `report_writer` method.
+
+### Supported Model Names
+
+LangDB supports a wide range of models from different providers using the LiteLLM format: `provider/model_name`.
+
+Here are some examples of valid model names:
+- `openai/gpt-4o`
+- `openai/gpt-3.5-turbo`
+- `anthropic/claude-3.5-sonnet-20240620`
+- `google/gemini-1.5-pro-latest`
+
+### Using Virtual Models for Tools (Researcher Agent)
+
+The **Researcher Agent** needs to use the Tavily Search tool to gather real-time information. To enable this, we need to configure a **Virtual Model** in LangDB that has the search tool attached.
+
+This involves two steps:
+1.  Creating a Virtual MCP Server for the search tool.
+2.  Creating a Virtual Model that uses this MCP Server.
+
+#### 1. Virtual MCP Server Setup
+
+1.  Log in to your LangDB account and navigate to **MCP Servers → Virtual MCP Servers**.
+2.  Click **+ New Virtual MCP Server** and configure it:
+    -   **Name**: Give it a descriptive name (e.g., `web-search-mcp`).
+    -   **Underlying MCP**: Choose the **Tavily Search MCP** from the list.
+3.  Save the new server.
+
+#### 2. Virtual Model Setup
+
+1.  Navigate to your project's **Models** page.
+2.  Click **+ New Virtual Model**.
+3.  Configure the model:
+    -   **Name**: e.g., `report-researcher`.
+    -   **Base Model**: Choose a powerful model for the agent (e.g., `openai/gpt-4o`).
+    -   **MCP Server**: Select the `web-search-mcp` you created in the previous step.
+4.  After creating the model, LangDB will generate a unique model name, like `openai/langdb/report-researcher@v1`.
+5.  Copy this name and use it in `main.py` for the `researcher` agent:
 
 ```python
-
-llm=create_llm("openai/anthropic/claude-3-5-sonnet-20240620", "research")
-
-llm=create_llm("openai/gpt-4.1", "analysis")
-
-
-llm=create_llm("openai/gemini/gemini-2.5-pro-preview", "report_writer")
+# In main.py, inside the ReportGenerationCrew class
+@agent
+def researcher(self) -> Agent:
+    return Agent(
+        config=self.agents_config['researcher'],
+        verbose=True,
+        # Use the virtual model name from LangDB
+        llm=create_llm("openai/langdb/report-researcher@v1", "research")
+    )
 ```
 
-### Changing Models
-
-To change the model for any agent, modify the model string in the corresponding agent method:
-
-1. **Researcher Agent**: Edit line 49 in `main.py`
-2. **Analyst Agent**: Edit line 57 in `main.py`
-3. **Report Writer Agent**: Edit line 65 in `main.py`
-
-### Supported Model Formats
-
-
-- OpenAI models: `"openai/gpt-4.1"`, `"openai/gpt-3.5-turbo"`
-- Other Provider Models are in format of LiteLLM so `openai/anthropic/claude-sonnet-4` 
-
+This setup ensures that when the `researcher` agent runs, it has access to the Tavily search tool, and all its search activities are traced in LangDB. 
 
 
 ## Usage
@@ -166,6 +188,7 @@ Tasks are defined in `configs/tasks.yaml`:
 - `crewai>=0.108.0`: Multi-agent orchestration framework
 - `crewai-tools>=0.0.1`: Additional tools for CrewAI
 - `python-dotenv>=1.0.1`: Environment variable management
+- `pylangdb>=0.2.0`: LangDB tracing integration for CrewAI
 
 
 ## References
