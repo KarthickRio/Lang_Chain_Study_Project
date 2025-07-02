@@ -14,22 +14,24 @@ import sys
 import time
 from typing import Literal
 from dotenv import load_dotenv
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 load_dotenv()
-
-
-
+from langdb_adk.openai import init
+init()
 # Third Party Imports
 from agents import (
     Agent,
     ModelSettings,
     RunConfig,
     Runner,
-    WebSearchTool,
     set_default_openai_key,
     set_default_openai_client,
-    set_tracing_disabled,
-    OpenAIChatCompletionsModel
+    set_default_openai_api,
+    OpenAIChatCompletionsModel,
+    ModelProvider,
+    Model
 )
 from agents.extensions.handoff_prompt import RECOMMENDED_PROMPT_PREFIX
 from openai import AsyncOpenAI
@@ -44,40 +46,30 @@ from openai.types.responses import (
     ResponseTextDeltaEvent,
     
 )
-from pydantic import BaseModel, Field
 from uuid import uuid4
-
+set_default_openai_api(api="chat_completions")
 
 # ------------------------------------------------------------------------------------------------
 # Initialize OpenAI client
 # ------------------------------------------------------------------------------------------------
 
-# Set default OpenAI key with use_for_tracing=False
-set_tracing_disabled(True)
-set_default_openai_key(key=os.environ.get("LANGDB_API_KEY"), use_for_tracing=False)
-    
-
 # Initialize with explicit parameters from environment variables
 client = AsyncOpenAI(
-    base_url=f"{os.environ.get('LANGDB_BASE_URL')}/{os.environ.get('LANGDB_PROJECT_ID')}/v1",
+    base_url=os.environ.get('LANGDB_API_BASE_URL'),
     api_key=os.environ.get("LANGDB_API_KEY"),
     default_headers = {
-        "x-thread-id": str(uuid4()),
-        "x-run-id": str(uuid4()),
+        "x-project-id": os.environ.get("LANGDB_PROJECT_ID")
     }
 )
 
-
+GROUP_ID = str(uuid4())  # Assign a unique group_id to link all steps in this session trace
 # Set the client for tracing
-set_default_openai_client(client, use_for_tracing=False)
+set_default_openai_client(client, use_for_tracing=True)
 
+def create_chat_model(model_name: str) -> OpenAIChatCompletionsModel:
+    """Utility to create an OpenAIChatCompletionsModel bound to the shared client."""
+    return OpenAIChatCompletionsModel(model=model_name, openai_client=client)
 
-def get_model(model_name: str, client: AsyncOpenAI):
-    model = OpenAIChatCompletionsModel(
-        model=model_name,
-        openai_client=client
-    )
-    return model
 
 # ------------------------------------------------------------------------------------------------
 # Specialized Agents
@@ -85,16 +77,13 @@ def get_model(model_name: str, client: AsyncOpenAI):
     
 booking_agent = Agent(  
     name="Booking Specialist",
-    model=get_model("gpt-4o", client),
+    model= create_chat_model('openai/gpt-4o'),
     instructions=f"{RECOMMENDED_PROMPT_PREFIX} You are a booking specialist. You help customers with their booking and reservation questions.",
 )
 
 travel_recommendation_agent = Agent(
     name="Travel Recommendation Specialist",
-    model=get_model("langdb/recc_8ac7wclb", client),  # langDB virtual model here, check readme for more information
-    model_settings=ModelSettings(
-        tool_choice='auto',
-    ),
+    model= create_chat_model('langdb/travel_recommendation__agent_cel0frnl'),  # LangDB virtual model here, check readme for more information
     instructions=f"{RECOMMENDED_PROMPT_PREFIX} You are a travel recommendation specialist. You help customers find ideal destinations and travel plans. Use the duckduckgo to find the best options.",
 )
 
@@ -104,13 +93,13 @@ travel_recommendation_agent = Agent(
 
 reply_agent = Agent(
     name="Reply Agent",
-    model=get_model("langdb/reply_idzqgtrm", client),  # langDB virtual model here, check readme for more information
+    model=   create_chat_model('langdb/reply_agent_xs3htfdl'),# LangDB virtual model here, check readme for more information
     instructions=f"{RECOMMENDED_PROMPT_PREFIX} You reply to the user's query and make it more informal by adding emojis.",
 )
 
 query_router_agent = Agent(
     name="Query Router",
-    model=get_model("langdb/router_c77w2sji", client),  # langDB virtual model here, check readme for more information
+    model= create_chat_model('langdb/query_router_agent_9q50y4ym'),  # LangDB virtual model here, check readme for more information
     model_settings=ModelSettings(
         tool_choice='auto',
         parallel_tool_calls = False
@@ -123,11 +112,11 @@ query_router_agent = Agent(
     ),
     tools=[
         booking_agent.as_tool(
-            tool_name="booking_tool",
+            tool_name="booking_agent",
             tool_description="Use when the user has questions about flight bookings, reservations, or ticketing",
         ),
         travel_recommendation_agent.as_tool(
-            tool_name="travel_tool",
+            tool_name="recommendation_agent",
             tool_description="Use when the user wants travel destination recommendations or itinerary planning",
         )
     ],
@@ -146,11 +135,10 @@ async def main():
     
     print("🔍 Processing your query: ", question)
     print("=" * 80)
-    
     try:
         print("\nCreating RunConfig with custom provider...")
         run_config = RunConfig(
-            tracing_disabled=True
+            group_id=GROUP_ID # Assign a unique group_id to link all steps in this session trace
         )
         print("RunConfig created, running agent...")
         
