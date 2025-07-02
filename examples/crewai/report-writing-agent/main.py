@@ -5,10 +5,11 @@ from crewai import Agent, Task, Crew, Process, LLM
 from crewai.project import CrewBase, agent, crew, task
 from dotenv import load_dotenv
 import sys
-from uuid import uuid4
+from pylangdb.crewai import init
 from utils import validate_environment_variables
 
 load_dotenv()
+init()
 
 # Validate environment variables
 env_status = validate_environment_variables()
@@ -25,9 +26,6 @@ api_key = os.environ.get("LANGDB_API_KEY")
 api_base = os.environ.get("LANGDB_BASE_URL")
 project_id = os.environ.get("LANGDB_PROJECT_ID")
 
-# Generate unique IDs for this session
-thread_id = str(uuid4())
-run_id = str(uuid4())
 
 # Base LLM configuration
 def create_llm(model, label):
