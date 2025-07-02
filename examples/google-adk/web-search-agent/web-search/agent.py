@@ -1,4 +1,7 @@
 """2-step Web Search Agent for comprehensive web-based query responses."""
+# Initialize LangDB
+from pylangdb.adk import init
+init()
 
 from google.adk.agents import SequentialAgent
 
