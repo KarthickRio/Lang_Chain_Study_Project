@@ -18,9 +18,7 @@ Create a `.env` file in this directory (`examples/crewai/crewai-tracing`) and ad
 
 LANGDB_API_KEY="<your_langdb_api_key>"
 LANGDB_PROJECT_ID="<your_langdb_project_id>"
-
-# Optional: If you are self-hosting or using a different region
-# LANGDB_API_BASE_URL="<your_langdb_api_base_url>"
+LANGDB_API_BASE_URL='https://api.us-east-1.langdb.ai'
 ```
 
 You will also need to set `SERPER_API_KEY` in the `.env` file to use the `SerperDevTool` included in the example.
@@ -39,7 +37,7 @@ This will install `pylangdb` with the `crewai` extra, which includes `crewai`, `
 
 LangDB uses a two-part approach to provide comprehensive tracing for CrewAI:
 
-### a) Structural Tracing with `init()`
+### Structural Tracing with `init()`
 
 The `main.py` script initializes LangDB tracing *before* importing any CrewAI modules. This call instruments CrewAI to capture the high-level structure of your agents, tasks, and crew.
 
@@ -52,7 +50,7 @@ from crewai import Agent, Task, Crew, LLM
 # ...
 ```
 
-### b) Model Call Tracing with `LLM` Configuration
+### Model Call Tracing with `LLM` Configuration
 
 To trace the actual Large Language Model (LLM) calls, you must configure the CrewAI `LLM` object to route requests through the LangDB proxy. This is done by setting the `api_key`, `base_url`, and `extra_headers`.
 
