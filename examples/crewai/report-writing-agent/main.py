@@ -6,37 +6,24 @@ from crewai.project import CrewBase, agent, crew, task
 from dotenv import load_dotenv
 import sys
 from pylangdb.crewai import init
-from utils import validate_environment_variables
 
 load_dotenv()
 init()
 
-# Validate environment variables
-env_status = validate_environment_variables()
-if not all(env_status.values()):
-    print("\nMissing environment variables detected!")
-    print("Please set the required API keys before running the agent.")
-    for var, is_set in env_status.items():
-        if not is_set:
-            print(f"- Set {var}")
-    sys.exit(1)
 
 # Initialize the OpenAI API
 api_key = os.environ.get("LANGDB_API_KEY")
-api_base = os.environ.get("LANGDB_BASE_URL")
+api_base = os.environ.get("LANGDB_API_BASE_URL")
 project_id = os.environ.get("LANGDB_PROJECT_ID")
 
 
 # Base LLM configuration
-def create_llm(model, label):
+def create_llm(model):
     return LLM(
         model=model,
         api_key=api_key,
         base_url=api_base,
         extra_headers={
-            "x-thread-id": thread_id,
-            "x-run-id": run_id,
-            "x-label": label,
             "x-project-id": project_id
         }
     )
@@ -53,7 +40,7 @@ class ReportGenerationCrew():
         return Agent(
             config=self.agents_config['researcher'],
             verbose=True,
-            llm=create_llm("openai/langdb/reportresearcher_9wzgx5n5", "research")
+            llm=create_llm("openai/langdb/reportresearcher_9wzgx5n5")
         )
 
     @agent
@@ -61,7 +48,7 @@ class ReportGenerationCrew():
         return Agent(
             config=self.agents_config['analyst'],
             verbose=True,
-            llm=create_llm("openai/anthropic/claude-3.7-sonnet", "analysis")
+            llm=create_llm("openai/anthropic/claude-3.7-sonnet")
         )
 
     @agent
@@ -69,7 +56,7 @@ class ReportGenerationCrew():
         return Agent(
             config=self.agents_config['report_writer'],
             verbose=True,
-            llm=create_llm("openai/gemini/gemini-2.5-pro-preview", "report_writer")
+            llm=create_llm("openai/gemini/gemini-2.5-pro-preview")
         )
 
     @task

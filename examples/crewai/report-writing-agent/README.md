@@ -50,7 +50,7 @@ In `main.py`, each agent's `llm` is instantiated by calling `create_llm()` with 
 
 ```python
 # Example from main.py
-llm = create_llm("openai/gpt-4o", "analysis")
+llm = create_llm("openai/gpt-4o")
 ```
 
 To change the model for any agent, simply modify the model string in the corresponding agent method:
