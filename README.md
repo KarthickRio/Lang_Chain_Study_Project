@@ -233,13 +233,16 @@ from google.adk.agents import Agent
 | LangChain | Basic Integration | [`examples/langchain/langchain-basic`](examples/langchain/langchain-basic) |
 | LangChain | Multi-agent Setup | [`examples/langchain/langchain-multi-agent`](examples/langchain/langchain-multi-agent) |
 | LangChain | RAG-agent Setup | [`examples/langchain/langchain-rag-bot`](examples/langchain/langchain-rag-bot) |
+| LangChain | LangGraph Tracing | [`examples/langchain/langgraph-tracing`](examples/langchain/langgraph-tracing) |
 | CrewAI | Basic Implementation | [`examples/crewai/crewai-basic`](examples/crewai/crewai-basic) |
 | CrewAI | Multi-agent Orchestration | [`examples/crewai/crewai-multi-agent`](examples/crewai/crewai-multi-agent) |
 | CrewAI | Report Writing Agent | [`examples/crewai/report-writing-agent`](examples/crewai/report-writing-agent) |
+| CrewAI | Basic Tracing | [`examples/crewai/crewai-tracing`](examples/crewai/crewai-tracing) |
 | Agno | Basic Tracing | [`examples/agno/agno-basic`](examples/agno/agno-basic) |
 | LlamaIndex | Basic Integration | [`examples/llamaindex/llamaindex-basic`](examples/llamaindex/llamaindex-basic) |
 | Google ADK | Web Search Agent | [`examples/google-adk/web-search-agent`](examples/google-adk/web-search-agent) |
 | Google ADK | Travel Concierge | [`examples/google-adk/travel-concierge`](examples/google-adk/travel-concierge) |
+| Google ADK | Multi-tool Agent | [`examples/google-adk/multi-tool-agent`](examples/google-adk/multi-tool-agent) |
 | OpenAI Agents SDK | Customer Support Agent | [`examples/openai/customer-support`](examples/openai/customer-support) |
 | OpenAI Agents SDK | Travel Agent | [`examples/openai/travel-agent`](examples/openai/travel-agent) |
 | OpenAI Agents SDK | Basic Tracing | [`examples/openai/openai-agents-tracing`](examples/openai/openai-agents-tracing) |
@@ -264,6 +267,7 @@ from google.adk.agents import Agent
 | Cafe Dashboard | Next.js with MCP Integration | [`examples/mcp/cafe-dashboard`](examples/mcp/cafe-dashboard) |
 | Server Actions Demo | Next.js Server Actions with MCP | [`examples/mcp/nextjs-server-actions-demo`](examples/mcp/nextjs-server-actions-demo) |
 | SvelteKit Integration | SvelteKit MCP Sample | [`examples/mcp/sveltekit-mcp-sample`](examples/mcp/sveltekit-mcp-sample) |
+| Smithery | MCP Smithery Sample | [`examples/mcp/smithery`](examples/mcp/smithery) |
 
 ## Key Features
 
