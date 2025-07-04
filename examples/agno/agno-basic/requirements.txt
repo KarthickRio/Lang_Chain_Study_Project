@@ -1,0 +1,3 @@
+pylangdb[agno]
+agno
+python-dotenv

@@ -1,0 +1,5 @@
+pylangdb[crewai]
+crewai
+python-dotenv
+setuptools
+crewai-tools

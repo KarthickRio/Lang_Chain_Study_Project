@@ -1,0 +1,6 @@
+pylangdb[langchain]
+langchain
+langgraph
+langchain_openai
+python-dotenv
+geopy
