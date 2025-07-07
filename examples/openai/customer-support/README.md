@@ -2,6 +2,15 @@
 
 A multi-agent system for handling restaurant customer support inquiries using various AI models.
 
+## Getting Started
+
+First, clone the repository and navigate to this example:
+
+```bash
+git clone https://github.com/langdb/langdb-samples.git
+cd langdb-samples/examples/openai/customer-support
+```
+
 ## Prerequisites
 
 - Python 3.8+

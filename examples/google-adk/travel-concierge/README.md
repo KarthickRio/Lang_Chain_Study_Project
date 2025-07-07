@@ -2,6 +2,15 @@
 
 A sophisticated, multi-agent system built with Google ADK that provides end-to-end travel planning, from inspiration to post-trip feedback, all with full observability through LangDB.
 
+## Getting Started
+
+First, clone the repository and navigate to this example:
+
+```bash
+git clone https://github.com/langdb/langdb-samples.git
+cd langdb-samples/examples/google-adk/travel-concierge
+```
+
 ## Overview
 
 This application demonstrates a hierarchical agent system where a main `root_agent` orchestrates a team of specialized sub-agents to handle a complete travel journey:

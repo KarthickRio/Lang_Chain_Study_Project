@@ -2,6 +2,15 @@
 
 This repository covers various examples leveraging LangChain.
 
+## Getting Started
+
+First, clone the repository and navigate to this example:
+
+```bash
+git clone https://github.com/langdb/langdb-samples.git
+cd langdb-samples/examples/langchain/langchain-basic
+```
+
 ## Pre-requisites
 
 ```bash 

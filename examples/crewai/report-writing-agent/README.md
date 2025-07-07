@@ -2,6 +2,15 @@
 
 A multi-agent report generation system built with CrewAI that creates comprehensive research reports on any given topic.
 
+## Getting Started
+
+First, clone the repository and navigate to this example:
+
+```bash
+git clone https://github.com/langdb/langdb-samples.git
+cd langdb-samples/examples/crewai/report-writing-agent
+```
+
 ## Overview
 
 This application uses three specialized AI agents working in sequence:

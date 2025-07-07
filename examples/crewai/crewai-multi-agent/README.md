@@ -2,6 +2,15 @@
 
 This repository covers an example leveraging CrewAI Multi-Agent.
 
+## Getting Started
+
+First, clone the repository and navigate to this example:
+
+```bash
+git clone https://github.com/langdb/langdb-samples.git
+cd langdb-samples/examples/crewai/crewai-multi-agent
+```
+
 ## Pre-requisites
 
 ```bash 

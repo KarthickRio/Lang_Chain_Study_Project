@@ -10,6 +10,15 @@ We will create a 4-agent pipeline:
 
 ---
 
+## Getting Started
+
+First, clone the repository and navigate to this example:
+
+```bash
+git clone https://github.com/langdb/langdb-samples.git
+cd langdb-samples/examples/openai/travel-agent
+```
+
 ## 1. Environment Setup
 
 Create a `.env` file and add your LangDB credentials. These will be used to automatically configure tracing and route model calls through the LangDB gateway.

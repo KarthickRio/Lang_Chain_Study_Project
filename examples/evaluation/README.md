@@ -2,6 +2,15 @@
 
 This directory contains tools and notebooks for evaluating and demonstrating the capabilities of LangDB's API.
 
+## Getting Started
+
+First, clone the repository and navigate to this example:
+
+```bash
+git clone https://github.com/langdb/langdb-samples.git
+cd langdb-samples/examples/evaluation
+```
+
 ## Contents
 
 - `evaluations.ipynb`: Interactive Jupyter notebook demonstrating LangDB's Messages API features

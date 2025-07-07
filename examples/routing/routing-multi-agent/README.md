@@ -2,6 +2,15 @@
 
 This example demonstrates how to use CrewAI to build a multi-agent system that routes questions to the most relevant agent.
 
+## Getting Started
+
+First, clone the repository and navigate to this example:
+
+```bash
+git clone https://github.com/langdb/langdb-samples.git
+cd langdb-samples/examples/routing/routing-multi-agent
+```
+
 ## Pre-requisites
 
 ```bash 

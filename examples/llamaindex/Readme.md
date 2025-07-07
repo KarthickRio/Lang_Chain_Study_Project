@@ -1,6 +1,15 @@
 # LlamaIndex Basic Example
 This example demonstrates how to use LlamaIndex to create a document index and query it using OpenAI's GPT model via LangDB.
 
+## Getting Started
+
+First, clone the repository and navigate to this example:
+
+```bash
+git clone https://github.com/langdb/langdb-samples.git
+cd langdb-samples/examples/llamaindex
+```
+
 ## Prerequisites
 - Python 3.8+
 - Access to LangDB.ai API

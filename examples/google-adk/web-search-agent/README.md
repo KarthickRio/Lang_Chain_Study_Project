@@ -2,6 +2,15 @@
 
 A comprehensive 2-step web search agent system built with Google ADK that provides thorough research and synthesized answers to user queries through sequential agent processing.
 
+## Getting Started
+
+First, clone the repository and navigate to this example:
+
+```bash
+git clone https://github.com/langdb/langdb-samples.git
+cd langdb-samples/examples/google-adk/web-search-agent
+```
+
 ## Overview
 
 This application uses a two-step sequential agent approach:

@@ -4,6 +4,15 @@ This example demonstrates how to trace a Google Agent Development Kit (ADK) agen
 
 This sample is based on the official [Google ADK Quickstart](https://google.github.io/adk-docs/get-started/quickstart/) and the [LangDB documentation for Google ADK](https://docs.langdb.ai/getting-started/working-with-agent-frameworks/working-with-google-adk).
 
+## Getting Started
+
+First, clone the repository and navigate to this example:
+
+```bash
+git clone https://github.com/langdb/langdb-samples.git
+cd langdb-samples/examples/google-adk/multi-tool-agent
+```
+
 ## Prerequisites
 
 1. **LangDB Account**: Ensure you have a LangDB account and have created a project to get your `LANGDB_API_KEY` and `LANGDB_PROJECT_ID`.

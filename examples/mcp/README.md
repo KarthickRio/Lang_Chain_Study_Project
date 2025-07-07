@@ -1,5 +1,14 @@
 # MCP Support with LangDB
 
+## Getting Started
+
+First, clone the repository and navigate to this example:
+
+```bash
+git clone https://github.com/langdb/langdb-samples.git
+cd langdb-samples/examples/mcp
+```
+
 ## Prerequisites
 
 ```

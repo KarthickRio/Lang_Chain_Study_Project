@@ -4,6 +4,15 @@ This example demonstrates how to trace an application built with the OpenAI Agen
 
 This sample is based on the [LangDB documentation for the OpenAI Agents SDK](https://docs.langdb.ai/getting-started/working-with-agent-frameworks/working-with-openai-agents-sdk).
 
+## Getting Started
+
+First, clone the repository and navigate to this example:
+
+```bash
+git clone https://github.com/langdb/langdb-samples.git
+cd langdb-samples/examples/openai/openai-agents-tracing
+```
+
 ## Prerequisites
 
 1. **LangDB Account**: Ensure you have a LangDB account and have created a project to get your `LANGDB_API_KEY` and `LANGDB_PROJECT_ID`.

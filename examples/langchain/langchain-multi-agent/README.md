@@ -2,6 +2,15 @@
 
 This example covers optimising a multi-agent system using LangDB.
 
+## Getting Started
+
+First, clone the repository and navigate to this example:
+
+```bash
+git clone https://github.com/langdb/langdb-samples.git
+cd langdb-samples/examples/langchain/langchain-multi-agent
+```
+
 ## Pre-requisites
 
 ```bash 

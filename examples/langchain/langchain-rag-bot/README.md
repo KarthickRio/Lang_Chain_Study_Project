@@ -2,6 +2,15 @@
 
 Welcome to the Banking FAQ Assistant repository! This project demonstrates how to build a scalable, RAG-powered conversational AI using **LangDB.ai** and **LangChain**. Perfect for creating intelligent banking chatbots that can answer questions about loans, interest rates, and general banking services.
 
+## Getting Started
+
+First, clone the repository and navigate to this example:
+
+```bash
+git clone https://github.com/langdb/langdb-samples.git
+cd langdb-samples/examples/langchain/langchain-rag-bot
+```
+
 ## Features
 
 - **RAG-Powered Responses:** Leverages Retrieval-Augmented Generation for accurate banking information
