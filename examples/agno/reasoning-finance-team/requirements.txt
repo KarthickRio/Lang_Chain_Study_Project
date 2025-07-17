@@ -1,0 +1,4 @@
+pylangdb[agno]
+agno
+python-dotenv
+yfinance
