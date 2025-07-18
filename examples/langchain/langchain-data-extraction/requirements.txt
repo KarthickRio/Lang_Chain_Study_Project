@@ -1,0 +1,8 @@
+pylangdb[langchain]
+langchain
+langgraph
+langchain_openai
+langchain_experimental
+langchain_community
+pydantic
+python-dotenv 
