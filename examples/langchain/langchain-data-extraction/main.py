@@ -51,6 +51,7 @@ def main():
     
     # Run the agent
     try:
+        phase_outputs = {}
         final_synthesis = None
         
         for output in agent.stream(initial_state):
@@ -62,6 +63,21 @@ def main():
                 # Show phase transitions
                 if key in ["preprocessing", "initial_extraction", "validation", "synthesis"]:
                     print(f"\n--- {key.upper()} PHASE ---")
+                
+                # Capture output from each phase
+                if key in ["preprocessing", "initial_extraction", "validation", "synthesis"] and "messages" in value:
+                    phase_content = ""
+                    for msg in value["messages"]:
+                        if hasattr(msg, 'content') and msg.content:
+                            phase_content = msg.content
+                            break
+                    
+                    if phase_content:
+                        phase_outputs[key] = phase_content
+                        print(f"\n{key.upper()} OUTPUT:")
+                        print("-" * 40)
+                        print(phase_content[:500] + "..." if len(phase_content) > 500 else phase_content)
+                        print("-" * 40)
                 
                 # Capture synthesis output for final display
                 if key == "synthesis" and "messages" in value:
