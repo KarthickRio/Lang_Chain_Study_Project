@@ -9,26 +9,16 @@ from langchain_openai import ChatOpenAI
 from models import ComplexAgentState, ExtractionPhase
 from tools import analyze_transcript_structure, extract_with_confidence, validate_extraction, refine_extraction
 from models import ComplexityLevel
+from dotenv import load_dotenv
+
+load_dotenv()
 
 def create_model():
     """Create and return the ChatOpenAI model with tools bound."""
-    api_base = os.getenv("LANGDB_API_BASE_URL")
-    api_key = os.getenv("LANGDB_API_KEY")
-    project_id = os.getenv("LANGDB_PROJECT_ID")
-    
-    if not api_key:
-        raise ValueError("Please set the LANGDB_API_KEY environment variable")
-    if not project_id:
-        raise ValueError("Please set the LANGDB_PROJECT_ID environment variable")
-
-    default_headers = {"x-project-id": project_id}
-    
     llm = ChatOpenAI(
-        model_name='openai/gpt-4o',
-        temperature=0.2,
-        openai_api_base=f"{api_base}/v1",
-        openai_api_key=api_key,
-        default_headers=default_headers
+    model="gpt-4o",
+    temperature=0.2,
+    api_key=os.getenv("OPENAI_API_KEY")
     )
     
     return llm.bind_tools([
@@ -108,18 +98,10 @@ def initial_extraction_node(state: ComplexAgentState) -> Dict[str, Any]:
     print("\n=== INITIAL EXTRACTION PHASE ===")
     
     # Create model WITHOUT tools to avoid JSON issues
-    api_base = os.getenv("LANGDB_API_BASE_URL")
-    api_key = os.getenv("LANGDB_API_KEY")
-    project_id = os.getenv("LANGDB_PROJECT_ID")
-    
-    default_headers = {"x-project-id": project_id}
-    
     llm = ChatOpenAI(
-        model_name='openai/gpt-4o',
-        temperature=0.2,
-        openai_api_base=f"{api_base}/v1",
-        openai_api_key=api_key,
-        default_headers=default_headers
+    model="gpt-4o",
+    temperature=0.2,
+    api_key=os.getenv("OPENAI_API_KEY")
     )
     
     extraction_prompt = f"""
@@ -160,18 +142,10 @@ def validation_node(state: ComplexAgentState) -> Dict[str, Any]:
     print("\n=== VALIDATION PHASE ===")
     
     # Create model WITHOUT tools to avoid JSON issues
-    api_base = os.getenv("LANGDB_API_BASE_URL")
-    api_key = os.getenv("LANGDB_API_KEY")
-    project_id = os.getenv("LANGDB_PROJECT_ID")
-    
-    default_headers = {"x-project-id": project_id}
-    
     llm = ChatOpenAI(
-        model_name='openai/gpt-4o',
-        temperature=0.2,
-        openai_api_base=f"{api_base}/v1",
-        openai_api_key=api_key,
-        default_headers=default_headers
+    model="gpt-4o",
+    temperature=0.2,
+    api_key=os.getenv("OPENAI_API_KEY")
     )
     
     validation_prompt = """
@@ -231,18 +205,10 @@ def synthesis_node(state: ComplexAgentState) -> Dict[str, Any]:
     """
     
     # Create model WITHOUT tools for synthesis
-    api_base = os.getenv("LANGDB_API_BASE_URL")
-    api_key = os.getenv("LANGDB_API_KEY")
-    project_id = os.getenv("LANGDB_PROJECT_ID")
-    
-    default_headers = {"x-project-id": project_id}
-    
     llm = ChatOpenAI(
-        model_name='openai/gpt-4o',
-        temperature=0.2,
-        openai_api_base=f"{api_base}/v1",
-        openai_api_key=api_key,
-        default_headers=default_headers
+    model="gpt-4o",
+    temperature=0.2,
+    api_key=os.getenv("OPENAI_API_KEY")
     )
     
     # Clean messages by removing complete tool call/response pairs
@@ -269,21 +235,12 @@ def fallback_node(state: ComplexAgentState) -> Dict[str, Any]:
     Use a simpler structure if the complex extraction failed.
     """
     
-    # Create model WITHOUT tools for fallback
-    api_base = os.getenv("LANGDB_API_BASE_URL")
-    api_key = os.getenv("LANGDB_API_KEY")
-    project_id = os.getenv("LANGDB_PROJECT_ID")
-    
-    default_headers = {"x-project-id": project_id}
     
     llm = ChatOpenAI(
-        model_name='openai/gpt-4o',
-        temperature=0.2,
-        openai_api_base=f"{api_base}/v1",
-        openai_api_key=api_key,
-        default_headers=default_headers
+    model="gpt-4o",
+    temperature=0.2,
+    api_key=os.getenv("OPENAI_API_KEY")
     )
-    
     messages = [HumanMessage(content=fallback_prompt)]
     response = llm.invoke(messages)
     

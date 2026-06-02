@@ -11,8 +11,8 @@ import os
 import sys
 from langchain_core.messages import HumanMessage
 
-from pylangdb.langchain import init
-init()
+# from pylangdb.langchain import init
+# init()
 
 # Import our modular components
 from models import ComplexAgentState, ComplexityLevel
