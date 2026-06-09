@@ -1,112 +1,75 @@
 """
-Complex Extraction Agent using LangGraph
-Demonstrates advanced workflow patterns including:
-- Multi-stage processing with validation
-- Conditional routing based on quality assessment
-- Iterative refinement with feedback loops
-- Fallback mechanisms for robustness
+main.py
+
+Entry point. Pass a PDF path as a command-line argument.
+
+Usage:
+    python main.py path/to/document.pdf
+
+The agent runs the full pipeline and prints the final_output dict.
+Set ANTHROPIC_API_KEY in your environment before running.
+
+Windows PowerShell:
+    $env:ANTHROPIC_API_KEY = "sk-ant-..."
+    python main.py "D:\\path\\to\\your.pdf"
 """
 
-import os
 import sys
+import json
 from langchain_core.messages import HumanMessage
+from state import MedicalFaxState, PDFType, ProcessingPhase, DocType
+from agent import create_agent
 
-# from pylangdb.langchain import init
-# init()
 
-# Import our modular components
-from models import ComplexAgentState, ComplexityLevel
-from agent import create_complex_agent
-from transcript import get_complex_transcript
+def run(pdf_path: str):
+    agent = create_agent()
 
-def main():
-    """Run the complex extraction agent"""
-    
-    # Create the agent
-    agent = create_complex_agent()
-    
-    # Get complex transcript
-    transcript = get_complex_transcript()
-    
-    # Initialize state
     initial_state = {
-        "messages": [HumanMessage(content=f"Process this complex meeting transcript: {transcript}")],
-        "transcript": transcript,
-        "complexity_level": ComplexityLevel.COMPLEX,
-        "extraction_attempts": 0,
-        "max_attempts": 3,
-        "confidence_scores": {},
-        "validation_feedback": [],
-        "extraction_data": {},
-        "current_phase": "preprocessing",
-        "requires_refinement": False,
-        "processing_complete": False,
-        "error_count": 0
+        "messages":            [HumanMessage(content=f"Process PDF: {pdf_path}")],
+        "pdf_path":            pdf_path,
+        "pdf_type":            PDFType.UNKNOWN,
+        "raw_text":            "",
+        "page_count":          0,
+        "text_per_page":       [],
+        "doc_type":            DocType.UNKNOWN,
+        "doc_type_confidence": 0.0,
+        "extracted_fields":    {},
+        "missing_fields":      [],
+        "confidence_score":    0.0,
+        "ai_feedback":         [],
+        "ai_refined_fields":   {},
+        "validation_passed":   False,
+        "current_phase":       ProcessingPhase.INGESTION,
+        "error_messages":      [],
+        "final_output":        None,
     }
-    
-    print("=== COMPLEX EXTRACTION AGENT STARTING ===")
-    print(f"Transcript length: {len(transcript)} characters")
-    print(f"Estimated complexity: {ComplexityLevel.COMPLEX}")
-    print("\n" + "="*60)
-    
-    # Run the agent
-    try:
-        phase_outputs = {}
-        final_synthesis = None
-        
-        for output in agent.stream(initial_state):
-            for key, value in output.items():
-                if key == "__end__":
-                    print("\n=== PROCESSING COMPLETE ===")
-                    continue
-                
-                # Show phase transitions
-                if key in ["preprocessing", "initial_extraction", "validation", "synthesis"]:
-                    print(f"\n--- {key.upper()} PHASE ---")
-                
-                # Capture output from each phase
-                if key in ["preprocessing", "initial_extraction", "validation", "synthesis"] and "messages" in value:
-                    phase_content = ""
-                    for msg in value["messages"]:
-                        if hasattr(msg, 'content') and msg.content:
-                            phase_content = msg.content
-                            break
-                    
-                    if phase_content:
-                        phase_outputs[key] = phase_content
-                        print(f"\n{key.upper()} OUTPUT:")
-                        print("-" * 40)
-                        print(phase_content[:500] + "..." if len(phase_content) > 500 else phase_content)
-                        print("-" * 40)
-                
-                # Capture synthesis output for final display
-                if key == "synthesis" and "messages" in value:
-                    for msg in value["messages"]:
-                        if hasattr(msg, 'content') and msg.content:
-                            final_synthesis = msg.content
-                
-                # Show tool node activity
-                elif key == "tool_node" and "messages" in value:
-                    for msg in value["messages"]:
-                        if hasattr(msg, 'content') and msg.content:
-                            if "Error:" in msg.content:
-                                print(f"  ⚠️  Tool error: {msg.content[:100]}...")
-                            else:
-                                print(f"  ✅ Tool executed successfully")
-        
-        # Display final synthesis
-        if final_synthesis:
-            print("\n" + "="*60)
-            print("=== FINAL EXTRACTION RESULTS ===")
-            print("="*60)
-            print(final_synthesis)
-            print("="*60)
-    
-    except Exception as e:
-        print(f"Error during processing: {e}")
-        import traceback
-        traceback.print_exc()
-        print("Falling back to simplified extraction...")
+
+    print(f"\n{'='*55}")
+    print(f"  MEDICAL FAX AGENT")
+    print(f"  PDF: {pdf_path}")
+    print(f"{'='*55}")
+
+    final_state = agent.invoke(initial_state)
+
+    # ── Print final output ────────────────────────────────────────────
+    print(f"\n{'='*55}")
+    print(f"  FINAL OUTPUT")
+    print(f"{'='*55}")
+    output = final_state.get("final_output")
+    if output:
+        print(json.dumps(output, indent=2, default=str))
+    else:
+        print("  No final output — check error_messages:")
+        print(f"  {final_state.get('error_messages')}")
+
+    return final_state
+
 
 if __name__ == "__main__":
-    main()
+    if len(sys.argv) < 2:
+        print("Usage: python main.py <path_to_pdf>")
+        print('Example: python main.py "D:\\docs\\fax.pdf"')
+        sys.exit(1)
+
+    run(sys.argv[1])
+    

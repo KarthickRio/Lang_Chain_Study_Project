@@ -1,83 +1,82 @@
 """
-Agent construction and workflow definition for the complex extraction agent
+agent.py
+
+Wires all nodes into a LangGraph StateGraph.
+
+Full flow:
+    pdf_ingestion
+         ↓  route_after_ingestion
+    native_preprocessing ──┐
+    scanned_preprocessing ─┤
+                           ↓  route_after_preprocessing
+                    ai_extraction  ←── (if confidence ≤ 0.80)
+                           ↓            or skip straight to:
+                       synthesis  ←─────────────────────────
+                           ↓
+                          END
 """
 
 from langgraph.graph import StateGraph, END
-from langgraph.prebuilt import ToolNode
-from models import ComplexAgentState, ComplexityLevel
-from nodes import (
-    preprocessing_node, initial_extraction_node, validation_node, 
-    refinement_node, synthesis_node, fallback_node,
-    route_after_preprocessing, route_after_validation, 
-    route_after_refinement, route_after_tool_node
-)
-from tools import analyze_transcript_structure, extract_with_confidence, validate_extraction, refine_extraction
+from state import MedicalFaxState
 
-def create_complex_agent():
-    """Create and return the complex LangGraph agent"""
-    
-    workflow = StateGraph(ComplexAgentState)
-    
-    # Add nodes
-    workflow.add_node("preprocessing", preprocessing_node)
-    workflow.add_node("initial_extraction", initial_extraction_node)
-    workflow.add_node("validation", validation_node)
-    workflow.add_node("refinement", refinement_node)
-    workflow.add_node("synthesis", synthesis_node)
-    workflow.add_node("fallback", fallback_node)
-    workflow.add_node("tool_node", ToolNode([
-        analyze_transcript_structure,
-        extract_with_confidence,
-        validate_extraction,
-        refine_extraction
-    ]))
-    
-    # Set entry point
-    workflow.set_entry_point("preprocessing")
-    
-    # Add edges
+from pdf_ingestion_node      import pdf_ingestion_node,      route_after_ingestion
+from native_preprocessing_node  import native_preprocessing_node
+from scanned_preprocessing_node import scanned_preprocessing_node, route_after_preprocessing
+from ai_extraction_node      import ai_extraction_node,      route_after_ai_extraction
+from synthesis_node          import synthesis_node
+
+
+def create_agent():
+    workflow = StateGraph(MedicalFaxState)
+
+    # ── Register nodes ────────────────────────────────────────────────
+    workflow.add_node("pdf_ingestion",          pdf_ingestion_node)
+    workflow.add_node("native_preprocessing",   native_preprocessing_node)
+    workflow.add_node("scanned_preprocessing",  scanned_preprocessing_node)
+    workflow.add_node("ai_extraction",          ai_extraction_node)
+    workflow.add_node("synthesis",              synthesis_node)
+
+    # ── Entry point ───────────────────────────────────────────────────
+    workflow.set_entry_point("pdf_ingestion")
+
+    # ── Conditional edge: ingestion → native or scanned ───────────────
     workflow.add_conditional_edges(
-        "preprocessing",
+        "pdf_ingestion",
+        route_after_ingestion,
+        {
+            "native_preprocessing":  "native_preprocessing",
+            "scanned_preprocessing": "scanned_preprocessing",
+        }
+    )
+
+    # ── Conditional edge: both preprocessing paths → AI or synthesis ──
+    workflow.add_conditional_edges(
+        "native_preprocessing",
         route_after_preprocessing,
         {
-            "tool_node": "tool_node",
-            "initial_extraction": "initial_extraction"
+            "ai_extraction": "ai_extraction",
+            "synthesis":     "synthesis",
         }
     )
-    
-    # Route tool_node back to the appropriate next step
     workflow.add_conditional_edges(
-        "tool_node",
-        route_after_tool_node,
+        "scanned_preprocessing",
+        route_after_preprocessing,
         {
-            "initial_extraction": "initial_extraction",
-            "validation": "validation", 
-            "synthesis": "synthesis"
+            "ai_extraction": "ai_extraction",
+            "synthesis":     "synthesis",
         }
     )
-    
-    # Add conditional edges for nodes that might make tool calls
+
+    # ── AI extraction always goes to synthesis ────────────────────────
     workflow.add_conditional_edges(
-        "initial_extraction",
-        lambda state: "tool_node" if hasattr(state["messages"][-1], 'tool_calls') and state["messages"][-1].tool_calls else "validation",
+        "ai_extraction",
+        route_after_ai_extraction,
         {
-            "tool_node": "tool_node",
-            "validation": "validation"
+            "synthesis": "synthesis",
         }
     )
-    
-    workflow.add_conditional_edges(
-        "validation", 
-        lambda state: "tool_node" if hasattr(state["messages"][-1], 'tool_calls') and state["messages"][-1].tool_calls else "synthesis",
-        {
-            "tool_node": "tool_node",
-            "synthesis": "synthesis"
-        }
-    )
-    
-    workflow.add_edge("refinement", "synthesis")
-    
+
+    # ── Synthesis is the terminal node ────────────────────────────────
     workflow.add_edge("synthesis", END)
-    workflow.add_edge("fallback", END)
-    
-    return workflow.compile() 
+
+    return workflow.compile()
