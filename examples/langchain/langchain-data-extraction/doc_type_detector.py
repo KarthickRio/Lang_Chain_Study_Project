@@ -1,45 +1,102 @@
 """
 doc_type_detector.py
 
-Classifies a medical fax into a document type using weighted keyword scoring.
+Classifies a US medical fax into a document type using weighted keyword scoring.
 
-How it works
-────────────
-Each doc type has three tiers of keywords:
-  strong  → 3 points each  (almost uniquely identify the doc type)
-  medium  → 2 points each  (common to this type but not exclusive)
-  weak    → 1 point each   (generic medical terms)
+How scoring works
+──────────────────
+strong  → 3 points  (vocabulary almost unique to this doc type)
+medium  → 2 points  (common to this type, rarely in others)
+weak    → 1 point   (generic medical terms, appear everywhere)
 
-We lowercase the text, scan for each keyword, sum the points per type.
-The type with the highest score wins.
+Winner = highest total score.
+Confidence = winner_score / max_possible_score_for_that_type.
 
-Ambiguity detection
-───────────────────
-If the top two scores are within 20% of each other, we flag the result
-as ambiguous and reduce confidence accordingly. The AI validation step
-later can handle ambiguous cases more intelligently.
+Ambiguity rule
+───────────────
+If runner-up score / winner score >= 0.80 → flag as ambiguous,
+reduce confidence by 25%. AI validation handles ambiguous cases.
 
-Confidence scoring for doc_type
-────────────────────────────────
-  confidence = top_score / max_possible_score_for_that_type
-
-  This gives a relative measure: how many of the known signals for this
-  type were actually present in the document.
-
-Reference for medical fax vocabulary:
-  CMS-1500 claim form field labels:
-  https://www.cms.gov/medicare/cms-forms/cms-forms/downloads/cms1500.pdf
+Changes from previous version
+───────────────────────────────
+Added RX_RENEWAL doc type with keywords from real US renewal fax:
+  "rxrenewal request", "erx id", "ncpdp", "last filled",
+  "drug prescribed", "qty. prescribed", "qty. dispensed"
+These are distinct from PRESCRIPTION keywords which cover
+newly written Rx forms rather than pharmacy renewal requests.
 """
 
 import re
 from state import DocType
 
 
-# ── Keyword tiers per document type ───────────────────────────────────────────
-# Each entry: { "strong": [...], "medium": [...], "weak": [...] }
-
 DOC_TYPE_KEYWORDS: dict[DocType, dict] = {
 
+    # ── RX_RENEWAL ────────────────────────────────────────────────────
+    # Keywords taken directly from real RxRenewal fax text.
+    # "ncpdp" and "erx id" are unique identifiers that only appear
+    # on electronic prescription renewal requests — high signal.
+    # "last filled" only appears on renewals, not new prescriptions.
+    DocType.RX_RENEWAL: {
+        "strong": [
+            "rxrenewal request",
+            "rx renewal request",
+            "erx id",           # electronic Rx transaction ID
+            "ncpdp",            # National Council for Prescription Drug Programs
+            "last filled",      # renewal-specific — when drug was last dispensed
+            "drug prescribed",  # exact label on renewal fax forms
+            "qty. prescribed",  # exact label with period — renewal forms use this
+            "qty. dispensed",   # only on renewals — what pharmacy actually gave
+        ],
+        "medium": [
+            "date written",
+            "dispense as written",
+            "rx number",
+            "drug dispensed",
+            "sig",
+            "refills",
+            "substitution permitted",
+        ],
+        "weak": [
+            "pharmacy",
+            "prescriber",
+            "patient",
+            "dea",
+            "npi",
+        ],
+    },
+
+    # ── PRESCRIPTION ──────────────────────────────────────────────────
+    # Standard newly-written prescription form.
+    # Distinct from RX_RENEWAL — no "last filled", no "ncpdp",
+    # no "qty. dispensed". Uses "quantity" not "qty. prescribed".
+    DocType.PRESCRIPTION: {
+        "strong": [
+            "rx",
+            "dispense",
+            "refills",
+            "sig:",
+            "dea number",
+            "days supply",
+            "prescribe",
+        ],
+        "medium": [
+            "dosage",
+            "quantity",
+            "tablet",
+            "capsule",
+            "mg",
+        ],
+        "weak": [
+            "medication",
+            "pharmacy",
+            "drug",
+            "dose",
+            "patient",
+        ],
+    },
+
+    # ── REFERRAL ──────────────────────────────────────────────────────
     DocType.REFERRAL: {
         "strong": [
             "referring physician",
@@ -64,6 +121,7 @@ DOC_TYPE_KEYWORDS: dict[DocType, dict] = {
         ],
     },
 
+    # ── LAB_RESULT ────────────────────────────────────────────────────
     DocType.LAB_RESULT: {
         "strong": [
             "lab result",
@@ -79,8 +137,6 @@ DOC_TYPE_KEYWORDS: dict[DocType, dict] = {
             "collected",
             "units",
             "flag",
-            "h",   # "H" marker for high values — common in lab printouts
-            "l",   # "L" marker for low values
         ],
         "weak": [
             "test",
@@ -91,33 +147,7 @@ DOC_TYPE_KEYWORDS: dict[DocType, dict] = {
         ],
     },
 
-    DocType.PRESCRIPTION: {
-        "strong": [
-            "rx",
-            "dispense",
-            "refills",
-            "sig:",
-            "prescribe",
-            "dea number",
-            "days supply",
-        ],
-        "medium": [
-            "dosage",
-            "quantity",
-            "take",
-            "tablet",
-            "capsule",
-            "mg",
-        ],
-        "weak": [
-            "medication",
-            "pharmacy",
-            "drug",
-            "dose",
-            "patient",
-        ],
-    },
-
+    # ── INSURANCE_AUTH ────────────────────────────────────────────────
     DocType.INSURANCE_AUTH: {
         "strong": [
             "prior authorization",
@@ -144,75 +174,60 @@ DOC_TYPE_KEYWORDS: dict[DocType, dict] = {
     },
 }
 
-# Points per tier
-TIER_WEIGHTS = {"strong": 3, "medium": 2, "weak": 1}
-
-# Ambiguity threshold — if runner-up score / top score > this, flag as ambiguous
+TIER_WEIGHTS   = {"strong": 3, "medium": 2, "weak": 1}
 AMBIGUITY_RATIO = 0.80
 
 
 def detect_doc_type(text: str) -> tuple[DocType, float, dict]:
     """
-    Classify the document type from plain text.
+    Classify document type from plain text.
 
     Returns
     -------
-    doc_type        : DocType enum value
-    confidence      : float 0.0–1.0
-    scores_detail   : dict with per-type scores (useful for debugging)
+    doc_type      : DocType enum
+    confidence    : float 0.0–1.0
+    scores_detail : dict  (for debugging)
     """
     text_lower = text.lower()
-
-    scores: dict[DocType, int] = {}
+    scores:           dict[DocType, int]  = {}
     matched_keywords: dict[DocType, list] = {}
 
     for doc_type, tiers in DOC_TYPE_KEYWORDS.items():
         total   = 0
         matched = []
-
         for tier_name, keywords in tiers.items():
             weight = TIER_WEIGHTS[tier_name]
             for kw in keywords:
-                # Use word boundary matching to avoid substring false positives
-                # e.g. "rx" should not match "proxy"
                 pattern = r'\b' + re.escape(kw) + r'\b'
                 if re.search(pattern, text_lower):
                     total += weight
                     matched.append((kw, tier_name, weight))
-
-        scores[doc_type]          = total
+        scores[doc_type]           = total
         matched_keywords[doc_type] = matched
 
-    # Find top and runner-up
-    sorted_types = sorted(scores.items(), key=lambda x: x[1], reverse=True)
-    top_type,     top_score    = sorted_types[0]
-    second_type,  second_score = sorted_types[1] if len(sorted_types) > 1 else (None, 0)
+    sorted_types  = sorted(scores.items(), key=lambda x: x[1], reverse=True)
+    top_type,    top_score    = sorted_types[0]
+    second_type, second_score = sorted_types[1] if len(sorted_types) > 1 else (None, 0)
 
-    # Handle zero scores — nothing matched at all
     if top_score == 0:
         return DocType.UNKNOWN, 0.0, {"scores": scores, "matched": matched_keywords}
 
-    # Compute max possible score for this doc type
-    # (if every keyword in every tier matched)
     max_possible = sum(
         TIER_WEIGHTS[tier] * len(kws)
         for tier, kws in DOC_TYPE_KEYWORDS[top_type].items()
     )
     raw_confidence = top_score / max_possible
 
-    # Reduce confidence if result is ambiguous
     is_ambiguous = (second_score > 0) and (second_score / top_score >= AMBIGUITY_RATIO)
     if is_ambiguous:
-        raw_confidence *= 0.75  # penalise — AI should double-check
+        raw_confidence *= 0.75
         print(f"  ⚠️  Ambiguous: {top_type} ({top_score}pt) vs {second_type} ({second_score}pt)")
     else:
-        print(f"  ✅ Doc type: {top_type} (score {top_score}/{max_possible}, "
-              f"confidence {raw_confidence:.2f})")
+        print(f"  ✅ Doc type: {top_type} "
+              f"(score {top_score}/{max_possible}, confidence {raw_confidence:.2f})")
 
-    scores_detail = {
-        "scores":      {k.value: v for k, v in scores.items()},
-        "matched":     {k.value: v for k, v in matched_keywords.items()},
+    return top_type, round(raw_confidence, 3), {
+        "scores":       {k.value: v for k, v in scores.items()},
+        "matched":      {k.value: v for k, v in matched_keywords.items()},
         "is_ambiguous": is_ambiguous,
     }
-
-    return top_type, round(raw_confidence, 3), scores_detail
