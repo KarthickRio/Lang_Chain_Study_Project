@@ -124,7 +124,7 @@ def scanned_preprocessing_node(state: MedicalFaxState) -> dict:
         doc_type, type_confidence, _ = detect_doc_type(raw_text)
 
         print(f"  Step 3: field extraction for doc_type={doc_type}")
-        extracted_fields, missing_fields, field_confidence = extract_fields(raw_text, doc_type)
+        extracted_fields, missing_fields, field_confidence, phi_fields_found = extract_fields(raw_text, doc_type)
 
         message_text = (
             f"Scanned preprocessing complete. "
@@ -144,6 +144,7 @@ def scanned_preprocessing_node(state: MedicalFaxState) -> dict:
             "extracted_fields":    extracted_fields,
             "missing_fields":      missing_fields,
             "confidence_score":    field_confidence,
+            "phi_fields":          phi_fields_found,
             "current_phase":       ProcessingPhase.SCANNED_PREPROCESSING,
             "error_messages":      errors,
         }

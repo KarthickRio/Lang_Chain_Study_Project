@@ -49,7 +49,7 @@ def native_preprocessing_node(state: MedicalFaxState) -> dict:
 
     # Step 2 — extract fields based on detected type
     print(f"  Step 2: field extraction for doc_type={doc_type}")
-    extracted_fields, missing_fields, field_confidence = extract_fields(raw_text, doc_type)
+    extracted_fields, missing_fields, field_confidence, phi_fields_found = extract_fields(raw_text, doc_type)
 
     # Step 3 — save everything to state
     message_text = (
@@ -68,6 +68,7 @@ def native_preprocessing_node(state: MedicalFaxState) -> dict:
         "extracted_fields":    extracted_fields,
         "missing_fields":      missing_fields,
         "confidence_score":    field_confidence,
+        "phi_fields":          phi_fields_found,
         "current_phase":       ProcessingPhase.NATIVE_PREPROCESSING,
         "error_messages":      errors,
     }
