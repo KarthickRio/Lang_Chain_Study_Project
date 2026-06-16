@@ -108,6 +108,11 @@ class MedicalFaxState(TypedDict):
     ndc_code:      str              # from lookup_ndc tool — uniquely IDs the drug
     npi_verified:  bool             # from verify_npi tool — is prescriber NPI real
 
+    # ── Filled by memory_lookup_node (Day 2 addition) ──────────────────
+    # List of hint strings from similar past documents, injected into
+    # the AI extraction prompt so the agent learns from past mistakes
+    memory_hints: List[str]
+
     # ── Filled by AI extraction node ──────────────────────────────────
     ai_feedback:       List[str]        # list of issues flagged by LLM
     ai_refined_fields: Dict[str, Any]   # regex fields + AI gap fills merged

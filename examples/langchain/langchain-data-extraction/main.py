@@ -40,6 +40,8 @@ def run(pdf_path: str):
         "ai_refined_fields":   {},
         "validation_passed":   False,
         "current_phase":       ProcessingPhase.INGESTION,
+        "phi_fields":          [],
+        "memory_hints":        [],
         "error_messages":      [],
         "final_output":        None,
     }
@@ -72,4 +74,3 @@ if __name__ == "__main__":
         sys.exit(1)
 
     run(sys.argv[1])
-    
