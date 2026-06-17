@@ -42,6 +42,10 @@ def run(pdf_path: str):
         "current_phase":       ProcessingPhase.INGESTION,
         "phi_fields":          [],
         "memory_hints":        [],
+        "specialists_needed":   [],
+        "patient_agent_result":  {},
+        "provider_agent_result": {},
+        "drug_agent_result":     {},
         "error_messages":      [],
         "final_output":        None,
     }

@@ -113,6 +113,19 @@ class MedicalFaxState(TypedDict):
     # the AI extraction prompt so the agent learns from past mistakes
     memory_hints: List[str]
 
+    # ── Filled by supervisor + specialist agents (Day 3 addition) ──────
+    # specialists_needed: what Supervisor decided to run, e.g.
+    #   ["patient_agent", "provider_agent"]  — drug_agent skipped because
+    #   all drug fields were already fully found by regex
+    specialists_needed: List[str]
+
+    # Each specialist's raw output before merge — kept separate so you
+    # can inspect exactly what each agent contributed, same audit
+    # trail principle as tool_results in Day 1
+    patient_agent_result:  Dict[str, Any]
+    provider_agent_result: Dict[str, Any]
+    drug_agent_result:     Dict[str, Any]
+
     # ── Filled by AI extraction node ──────────────────────────────────
     ai_feedback:       List[str]        # list of issues flagged by LLM
     ai_refined_fields: Dict[str, Any]   # regex fields + AI gap fills merged

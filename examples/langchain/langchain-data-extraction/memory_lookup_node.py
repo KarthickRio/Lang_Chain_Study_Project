@@ -34,7 +34,25 @@ def memory_lookup_node(state: MedicalFaxState) -> dict:
         n_results=2,
     )
 
-    hints = []
+    # ── Build hints with deduplication ─────────────────────────────────
+    # Bug found in Day 3 testing: when 2+ near-identical past records are
+    # returned by ChromaDB, the same field's issue was being turned into
+    # a hint once per match — producing duplicate hints in the prompt.
+    #
+    # First fix attempt deduped on (field, reason) exact match — but this
+    # missed near-duplicates where the LLM phrased the reason slightly
+    # differently across separate runs (e.g. "Aspirin." vs "Aspirin..").
+    # Same underlying issue, different wording, both passed through.
+    #
+    # Real fix: dedupe on FIELD NAME ALONE. If we've already surfaced
+    # one hint about 'drug_prescribed', a second reworded hint about the
+    # same field adds no new information to the LLM — one example of
+    # "this field type has caused problems before" is enough.
+    MAX_HINTS = 3
+
+    seen_fields = set()
+    hints       = []
+
     for match in matches:
         # Only surface hints from reasonably similar documents
         # distance is 0 = identical, higher = less similar
@@ -42,12 +60,20 @@ def memory_lookup_node(state: MedicalFaxState) -> dict:
         if match["distance"] > 1.5:
             continue
 
-        if match["suspicious_fields"]:
-            for field, reason in match["suspicious_fields"].items():
-                hints.append(
-                    f"A similar past {match['doc_type']} document had an issue "
-                    f"with '{field}': {reason}. Watch for this in the current document."
-                )
+        for field, reason in match["suspicious_fields"].items():
+            if field in seen_fields:
+                continue   # skip — already have a hint for this field
+            seen_fields.add(field)
+
+            hints.append(
+                f"A similar past {match['doc_type']} document had an issue "
+                f"with '{field}': {reason}. Watch for this in the current document."
+            )
+
+            if len(hints) >= MAX_HINTS:
+                break
+        if len(hints) >= MAX_HINTS:
+            break
 
     if not hints:
         print("  No actionable hints from memory")
