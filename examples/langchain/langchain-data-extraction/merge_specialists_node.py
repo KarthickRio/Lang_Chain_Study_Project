@@ -48,15 +48,41 @@ def merge_specialists_node(state: MedicalFaxState) -> dict:
 
     # ── Merge regex base + specialist findings ─────────────────────────
     ai_refined_fields = {**extracted, **all_found_fields}
-    for field, reason in all_suspicious_fields.items():
-        if field in ai_refined_fields:
-            original = ai_refined_fields[field]
-            ai_refined_fields[field] = f"[FLAGGED: {original}] {reason}"
 
-    # ── Collect tool results from Provider and Drug agents ────────────
+    # ── Collect tool results early — needed below to recover suspicious
+    #    values that were never placed in found_fields ───────────────────
     all_tool_results = {}
     all_tool_results.update(provider_result.get("tool_results", {}))
     all_tool_results.update(drug_result.get("tool_results", {}))
+
+    for field, reason in all_suspicious_fields.items():
+        if field in ai_refined_fields:
+            # Normal case: field has a value already (from regex or
+            # a specialist's found_fields) — wrap it with the flag
+            original = ai_refined_fields[field]
+            ai_refined_fields[field] = f"[FLAGGED: {original}] {reason}"
+        else:
+            # Bug fix (Day 4 testing): a specialist correctly did NOT
+            # put a wrong value into found_fields, but that meant the
+            # value disappeared from final output entirely instead of
+            # staying visible as a flagged value. Recover the actual
+            # value that was checked from tool_results so a human
+            # reviewer can still see WHAT was found and rejected,
+            # not just that something was wrong.
+            recovered_value = "(value not recovered)"
+            if field == "prescriber_npi" and "verify_npi" in all_tool_results:
+                # The NPI that was checked isn't in the tool result itself
+                # (verify_npi returns the REAL owner's info, not the
+                # input NPI) — so we note that explicitly instead of
+                # showing the wrong provider's NPI as if it were correct.
+                wrong_owner = all_tool_results["verify_npi"].get("provider_name", "unknown")
+                recovered_value = f"NPI on file belongs to: {wrong_owner}"
+            elif field == "drug_prescribed" and "lookup_ndc" in all_tool_results:
+                recovered_value = all_tool_results["lookup_ndc"].get("standard_name", "(unrecognised)")
+
+            ai_refined_fields[field] = f"[FLAGGED: {recovered_value}] {reason}"
+
+    # ── Tool results already collected above, before the flag-wrap loop ──
 
     # ── Pull ndc_code and npi_verified into top-level fields ───────────
     ndc_code     = ""

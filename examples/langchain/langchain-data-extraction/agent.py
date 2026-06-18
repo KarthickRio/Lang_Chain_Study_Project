@@ -37,6 +37,8 @@ Why each specialist's conditional edge checks specialists_needed:
 """
 
 from langgraph.graph import StateGraph, END
+from langgraph.checkpoint.memory import MemorySaver
+from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer
 from state import MedicalFaxState
 
 from pdf_ingestion_node         import pdf_ingestion_node,      route_after_ingestion
@@ -51,6 +53,7 @@ from patient_agent_node         import patient_agent_node
 from provider_agent_node        import provider_agent_node
 from drug_agent_node            import drug_agent_node
 from merge_specialists_node     import merge_specialists_node
+from human_review_node          import human_review_node
 from synthesis_node             import synthesis_node
 from memory_save_node           import memory_save_node
 
@@ -68,6 +71,7 @@ def create_agent():
     workflow.add_node("provider_agent",         provider_agent_node)
     workflow.add_node("drug_agent",             drug_agent_node)
     workflow.add_node("merge_specialists",      merge_specialists_node)
+    workflow.add_node("human_review",           human_review_node)
     workflow.add_node("synthesis",              synthesis_node)
     workflow.add_node("memory_save",            memory_save_node)
 
@@ -141,11 +145,37 @@ def create_agent():
     # ── Drug Agent always flows into merge ──────────────────────────────
     workflow.add_edge("drug_agent", "merge_specialists")
 
-    # ── merge_specialists always flows into synthesis ──────────────────
-    workflow.add_edge("merge_specialists", "synthesis")
+    # ── merge_specialists always flows into human_review ───────────────
+    workflow.add_edge("merge_specialists", "human_review")
+
+    # ── human_review always flows into synthesis ────────────────────────
+    # (human_review_node itself decides internally whether to pause —
+    #  if nothing is suspicious it returns immediately, no actual pause)
+    workflow.add_edge("human_review", "synthesis")
 
     # ── synthesis always flows into memory_save, then END ──────────────
     workflow.add_edge("synthesis",    "memory_save")
     workflow.add_edge("memory_save",  END)
 
-    return workflow.compile()
+    # ── Compile WITH a checkpointer ─────────────────────────────────────
+    # Required for interrupt() to work — LangGraph needs somewhere to
+    # save in-progress state so it can resume after a pause.
+    # MemorySaver keeps everything in memory for this script's lifetime —
+    # enough for a POC. A real deployment would use a persistent
+    # checkpointer (e.g. SqliteSaver or a database-backed one).
+    #
+    # allowed_msgpack_modules registers our custom str-Enum types
+    # (PDFType, DocType, ProcessingPhase) explicitly with the
+    # serializer. Without this, LangGraph prints a deprecation
+    # warning on every checkpoint/resume and will outright block
+    # these types in a future version — fixing it now avoids a
+    # breaking change later.
+    serde = JsonPlusSerializer(
+        allowed_msgpack_modules=[
+            ("state", "PDFType"),
+            ("state", "DocType"),
+            ("state", "ProcessingPhase"),
+        ]
+    )
+    checkpointer = MemorySaver(serde=serde)
+    return workflow.compile(checkpointer=checkpointer)

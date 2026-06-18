@@ -126,6 +126,12 @@ class MedicalFaxState(TypedDict):
     provider_agent_result: Dict[str, Any]
     drug_agent_result:     Dict[str, Any]
 
+    # ── Filled by human_review_node (Day 4 addition) ────────────────────
+    # Stores whatever the human typed in response to flagged fields,
+    # keyed by field name. Empty dict means no corrections were given
+    # (either nothing was flagged, or human pressed Enter to skip all)
+    human_corrections: Dict[str, str]
+
     # ── Filled by AI extraction node ──────────────────────────────────
     ai_feedback:       List[str]        # list of issues flagged by LLM
     ai_refined_fields: Dict[str, Any]   # regex fields + AI gap fills merged
